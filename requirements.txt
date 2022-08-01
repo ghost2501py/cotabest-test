@@ -1,4 +1,9 @@
 -c constraints.txt
+coverage
 Django==4.0.6
+django-db-geventpool
+django-environ
 djangorestframework
 django-filter
+gevent
+psycopg2-binary

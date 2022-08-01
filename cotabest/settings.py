@@ -12,20 +12,37 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+import environ
 
+# Build paths inside the project like this: base_dir / 'subdir'.
+base_dir = environ.Path(__file__) - 2
+
+
+# Defaults
+env = environ.Env(
+    DEBUG=(bool, False),
+    DATABASE_HOST=(str, 'localhost'),
+    DATABASE_PORT=(str, ''),
+    DATABASE_MAX_CONNS=(int, 20),
+)
+environ.Env.read_env(base_dir('.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-hzoujo!p%cy)m!h#ve8#jsnyx@)nm6=kl+8tfi^oh8l6(zet_@'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = ['*']
+INTERNAL_IPS = (
+    '127.0.0.1',
+    '0.0.0.0',
+)
+SITE_ID = 1
 
 
 # Application definition
@@ -83,8 +100,20 @@ WSGI_APPLICATION = 'cotabest.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django_db_geventpool.backends.postgresql_psycopg2',
+        'NAME': env('DATABASE_NAME'),
+        'USER': env('DATABASE_USER'),
+        'PASSWORD': env('DATABASE_PASSWORD'),
+        'HOST': env('DATABASE_HOST'),
+        'PORT': env('DATABASE_PORT'),
+        'ATOMIC_REQUESTS': False,
+
+        # CONN_MAX_AGE must be set to 0, or connections will never go back to the pool
+        'CONN_MAX_AGE': 0,
+
+        'OPTIONS': {
+            'MAX_CONNS': env('DATABASE_MAX_CONNS'),
+        },
     }
 }
 
