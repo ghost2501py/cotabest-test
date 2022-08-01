@@ -6,6 +6,7 @@ django-environ
 djangorestframework
 django-filter
 gevent
+gunicorn
 psycopg2-binary
 snapshottest==0.5.0
 whitenoise
