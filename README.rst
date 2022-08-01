@@ -4,6 +4,8 @@ CotaBest Test
 
 Test project for CotaBest job application
 
+See online: <https://fast-lake-35340.herokuapp.com/api/v1/docs/>
+
 Getting Started
 ===============
 
@@ -46,6 +48,11 @@ Deploy
 ======
 
 TODO
+
+API
+===
+
+API documentation can be found at <https://fast-lake-35340.herokuapp.com/api/v1/docs/> or <http://127.0.0.1:8000/api/v1/docs/>
 
 Requirements
 ============

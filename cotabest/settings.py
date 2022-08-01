@@ -81,7 +81,9 @@ ROOT_URLCONF = 'cotabest.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            base_dir('templates'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
