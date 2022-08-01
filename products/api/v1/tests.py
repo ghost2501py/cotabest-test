@@ -1,11 +1,10 @@
-import json
-
 from rest_framework import status
-from django.test import TestCase, Client
+from snapshottest.django import TestCase
+
+from django.test import Client
 from django.urls import reverse
 
-from ....models import Product
-from ..serializers import ProductSerializer
+from ...models import Product
 
 
 class ProductListTest(TestCase):
@@ -35,15 +34,11 @@ class ProductListTest(TestCase):
 
     def test_get_all_products(self):
         response = self.client.get(reverse('api_v1:products:product-list'))
-        products = Product.objects.all()
-        serializer = ProductSerializer(products, many=True)
-        self.assertEqual(response.data, serializer.data)
+        self.assertMatchSnapshot(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_get_products_by_name(self):
         url = reverse('api_v1:products:product-list') + '?name=açã'
         response = self.client.get(url)
-        products = Product.objects.filter(name__icontains="açã")
-        serializer = ProductSerializer(products, many=True)
-        self.assertEqual(response.data, serializer.data)
+        self.assertMatchSnapshot(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

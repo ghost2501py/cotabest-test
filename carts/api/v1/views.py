@@ -1,14 +1,16 @@
 from decimal import Decimal
 
 from rest_framework.decorators import api_view
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import ParseError
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
 
+from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
 
 from orders.models import Order, OrderItem
 from orders.api.v1.serializers import OrderSerializer
+from products.models import Product
 from ...models import Cart, CartItem
 from .serializers import CartSerializer
 
@@ -27,13 +29,21 @@ def create_cart(request):
 
 @api_view(['POST'])
 def add_product(request, pk):
-    instance = Cart.objects.get(pk=pk)
-    product = request.data['product_pk']
-    if CartItem.objects.filter(product=product).first():
-        raise APIException(_('The product already exists in the cart'))
+    instance = get_object_or_404(Cart, pk=pk)
+    product_pk = request.data['product_pk']
+    if CartItem.objects.filter(product=product_pk).first():
+        raise ParseError(_('The product already exists in the cart'))
 
+    product = Product.objects.get(pk=product_pk)
     quantity = request.data['quantity']
-    CartItem.objects.create(cart=instance, product_id=product, quantity=quantity)
+    if quantity % product.amount_per_package:
+        raise ParseError(_('The quantity is not compatible with the amount per package'))
+    if quantity > product.max_availability:
+        raise ParseError(_('Quantity is greater than max availability'))
+    if quantity < product.minimun:
+        raise ParseError(_(f'Quantity is less than the minimun ({product.minimun})'))
+
+    CartItem.objects.create(cart=instance, product=product, quantity=quantity)
 
     serializer = CartSerializer(instance)
     return Response(serializer.data)
@@ -41,13 +51,22 @@ def add_product(request, pk):
 
 @api_view(['PUT'])
 def change_quantity(request, pk):
-    instance = Cart.objects.get(pk=pk)
-    product = request.data['product_pk']
-    cart_item = CartItem.objects.filter(product=product).first()
+    instance = get_object_or_404(Cart, pk=pk)
+    product_pk = request.data['product_pk']
+    cart_item = CartItem.objects.filter(product=product_pk).first()
     if not cart_item:
-        raise APIException(_('The product must be added to cart first'))
+        raise ParseError(_('The product must be added to cart first'))
 
-    cart_item.quantity = request.data['quantity']
+    product = Product.objects.get(pk=product_pk)
+    quantity = request.data['quantity']
+    if quantity % product.amount_per_package:
+        raise ParseError(_('The quantity is not compatible with the amount per package'))
+    if quantity > product.max_availability:
+        raise ParseError(_('Quantity is greater than max availability'))
+    if quantity < product.minimun:
+        raise ParseError(_(f'Quantity is less than the minimun ({product.minimun})'))
+
+    cart_item.quantity = quantity
     cart_item.save()
 
     serializer = CartSerializer(instance)
@@ -56,10 +75,10 @@ def change_quantity(request, pk):
 
 @api_view(['DELETE'])
 def remove_product(request, pk, product_pk):
-    instance = Cart.objects.get(pk=pk)
+    instance = get_object_or_404(Cart, pk=pk)
     cart_item = CartItem.objects.filter(cart=pk, product=product_pk).first()
     if not cart_item:
-        raise APIException(_('The product must be added to cart first'))
+        raise ParseError(_('The product must be added to cart first'))
 
     cart_item.delete()
     serializer = CartSerializer(instance)
@@ -68,10 +87,10 @@ def remove_product(request, pk, product_pk):
 
 @api_view(['POST'])
 def finish(request, pk):
-    cart = Cart.objects.get(pk=pk)
+    cart = get_object_or_404(Cart, pk=pk)
     cart_items = cart.cartitem_set.all()
     if not cart_items.first():
-        raise APIException(_('There are no products in the cart'))
+        raise ParseError(_('There are no products in the cart'))
 
     order = Order.objects.create(total_price=0.0)
 
