@@ -8,3 +8,4 @@ django-filter
 gevent
 psycopg2-binary
 snapshottest==0.5.0
+whitenoise

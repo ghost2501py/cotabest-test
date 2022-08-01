@@ -17,6 +17,8 @@ import environ
 # Build paths inside the project like this: base_dir / 'subdir'.
 base_dir = environ.Path(__file__) - 2
 
+live_dir = base_dir.path('.live')
+
 
 # Defaults
 env = environ.Env(
@@ -152,7 +154,23 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    base_dir('static'),
+]
+
+STATIC_ROOT = live_dir('static')
+STATIC_URL = '/static/'
+
+MEDIA_ROOT = live_dir('media')
+MEDIA_URL = '/media/'
+
+if not DEBUG:
+    # Add WhiteNoiseMiddleware immediately after SecurityMiddleware.
+    # Avoid using whitenoise. Configure a server to provide static.
+    # Use whitenoise only in corner cases or for debugging purposes.
+    index = MIDDLEWARE.index('django.middleware.security.SecurityMiddleware')
+    MIDDLEWARE.insert(index + 1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
